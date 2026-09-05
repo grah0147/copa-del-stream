@@ -3,543 +3,271 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Copa DeL Stream | Admin</title>
+<title>Copa DeL Stream | Pro Edition</title>
 <style>
-  :root{ --gold:#d4af37; --gold-light:#f1d279; --bg:#0b0f1a; --panel:#141a29; --card-bg:#1e293b;
-    --text-light:#f8fafc; --text-muted:#94a3b8; --border:#334155; --danger:#e35b5b; }
-  *{ box-sizing:border-box; }
-  html,body{ margin:0; min-height:100%; background:var(--bg); color:var(--text-light); font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; }
+  :root, [data-theme="dark"] {
+    --primary:#0f172a; --gold:#d4af37; --gold-light:#f1d279;
+    --bg:#0b0f1a; --card-bg:#1e293b; --text-light:#f8fafc; --text-muted:#94a3b8;
+    --border:#334155; --th-bg:#0f172a;
+  }
+  [data-theme="light"] {
+    --primary:#0f172a; --gold:#b58d1b; --gold-light:#d4af37;
+    --bg:#f1f5f9; --card-bg:#ffffff; --text-light:#0f172a; --text-muted:#64748b;
+    --border:#cbd5e1; --th-bg:#e2e8f0;
+  }
+  * { box-sizing:border-box; }
+  body { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; background:var(--bg); margin:0; color:var(--text-light); transition:.3s; }
 
-  #login-screen{ height:100vh; display:flex; align-items:center; justify-content:center; }
-  .login-box{ width:320px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:30px; box-shadow:0 20px 50px rgba(0,0,0,.5); }
-  .login-box h1{ font-size:15px; text-transform:uppercase; letter-spacing:2px; color:var(--gold); margin:0 0 4px; }
-  .login-box p{ color:var(--text-muted); font-size:12px; margin:0 0 20px; }
-  .login-box input{ width:100%; padding:11px 12px; margin-bottom:12px; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:6px; color:var(--text-light); font-size:14px; }
-  .login-box input:focus{ outline:none; border-color:var(--gold); }
-  .login-box button{ width:100%; padding:12px; background:linear-gradient(135deg,var(--gold-light),var(--gold)); border:none; border-radius:6px; font-weight:800; letter-spacing:1px; text-transform:uppercase; font-size:12px; cursor:pointer; }
-  #login-error{ color:var(--danger); font-size:12px; margin-top:10px; min-height:14px; }
+  header { background:var(--primary) url('assets/tier-black.png') right -60px top -40px/220px no-repeat; padding:20px 0; text-align:center; position:fixed; top:0; width:100%; z-index:1000; border-bottom:3px solid var(--gold); box-shadow:0 4px 15px rgba(0,0,0,.5); }
+  .logo { font-size:24px; font-weight:900; text-transform:uppercase; letter-spacing:4px; background:linear-gradient(to bottom,var(--gold-light) 0%,var(--gold) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  nav { display:flex; justify-content:center; align-items:center; gap:10px; margin-top:15px; flex-wrap:wrap; }
+  nav button, .theme-dropdown select { background:rgba(255,255,255,.06); border:1px solid transparent; color:var(--text-muted); cursor:pointer; padding:8px 16px; font-size:11px; font-weight:700; border-radius:4px; text-transform:uppercase; transition:.3s; letter-spacing:1px; outline:none; }
+  nav button:hover, .theme-dropdown select:hover { color:#fff; border-color:var(--gold); }
+  nav button.active { border-color:var(--gold); color:var(--gold); background:rgba(212,175,55,.12); }
+  .theme-dropdown select { appearance:none; padding-right:28px; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path fill='%2394a3b8' d='M0,3l5,5l5,-5z'/></svg>"); background-repeat:no-repeat; background-position:calc(100% - 10px) center; }
 
-  #editor-screen{ display:none; }
-  #topbar{ display:flex; align-items:center; justify-content:space-between; padding:14px 20px; background:var(--panel); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10; flex-wrap:wrap; gap:10px; }
-  #topbar .brand{ font-weight:900; letter-spacing:2px; text-transform:uppercase; font-size:13px; color:var(--gold); }
-  #topbar .logout{ background:none; border:1px solid var(--border); color:var(--text-muted); padding:7px 14px; border-radius:6px; font-size:11px; cursor:pointer; text-transform:uppercase; }
-  #topbar .logout:hover{ border-color:var(--danger); color:var(--danger); }
+  .container { max-width:900px; margin:180px auto 50px; padding:0 15px; }
+  .page { display:none; }
+  .active-page { display:block; animation:fadeIn .4s ease; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(5px);} to{opacity:1; transform:translateY(0);} }
 
-  #tabs{ display:flex; gap:6px; padding:14px 20px 0; flex-wrap:wrap; }
-  #tabs button{ background:rgba(255,255,255,.05); border:1px solid var(--border); color:var(--text-muted); padding:9px 16px; border-radius:6px 6px 0 0; font-size:12px; font-weight:700; cursor:pointer; text-transform:uppercase; letter-spacing:.5px; }
-  #tabs button.active{ background:var(--card-bg); color:var(--gold); border-color:var(--gold); border-bottom-color:var(--card-bg); }
+  h2 { font-size:18px; font-weight:800; margin-bottom:20px; color:var(--gold); text-transform:uppercase; letter-spacing:1px; }
+  .pro-card { background:var(--card-bg); border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,.15); border:1px solid var(--border); padding:25px; line-height:1.8; }
+  .gold-bold { color:var(--gold); font-weight:700; }
+  .eyebrow { color:var(--gold-light); font-weight:800; letter-spacing:2px; font-size:12px; text-transform:uppercase; }
 
-  .tab-panel{ display:none; max-width:980px; margin:0 auto; padding:24px 20px 60px; }
-  .tab-panel.active{ display:block; }
-  .panel-card{ background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:20px; margin-bottom:20px; }
-  .panel-card h3{ margin:0 0 16px; font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--gold); }
+  .totw-callout { background:linear-gradient(135deg,#3a0d0d,#7a1414); border-radius:10px; padding:20px 22px; margin:20px 0; box-shadow:0 8px 24px rgba(0,0,0,.4); }
+  .totw-callout .badge { background:rgba(0,0,0,.55); color:#fff; font-size:10px; font-weight:900; letter-spacing:2px; padding:5px 10px; border-radius:20px; text-transform:uppercase; }
+  .totw-callout p { color:#fff; margin:6px 0 0; font-weight:700; }
 
-  table.admin-table{ width:100%; border-collapse:collapse; }
-  table.admin-table th{ text-align:left; font-size:10px; color:var(--text-muted); text-transform:uppercase; padding:8px; border-bottom:1px solid var(--border); }
-  table.admin-table td{ padding:6px 8px; border-bottom:1px solid var(--border); }
-  table.admin-table input{ width:100%; background:rgba(255,255,255,.05); border:1px solid var(--border); color:var(--text-light); padding:7px 8px; border-radius:5px; font-size:13px; }
-  table.admin-table input[type=number]{ width:70px; }
+  .date-header { background:var(--th-bg); padding:10px 20px; font-size:10px; font-weight:900; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; }
+  .match-row { display:flex; align-items:center; padding:20px; border-bottom:1px solid var(--border); }
+  .team { flex:1; font-weight:700; font-size:15px; }
+  .team.right { text-align:right; }
+  .score-box { background:var(--th-bg); color:var(--gold); padding:6px 14px; font-weight:800; margin:0 15px; min-width:40px; text-align:center; border-radius:4px; font-family:'Courier New',monospace; border:1px solid var(--border); }
+  .vs { color:var(--text-muted); }
 
-  .tier-chip{ display:inline-block; padding:3px 10px; border-radius:20px; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.5px; }
-  .tier-chip.white{ background:#c7ccd1; color:#111; }
-  .tier-chip.red{ background:#8f1414; color:#fff; }
-  .tier-chip.gold{ background:linear-gradient(135deg,#f1d279,#a67c00); color:#1a1a1a; }
-  .tier-chip.black{ background:linear-gradient(135deg,#111,#caa94b); color:#f1d279; }
+  .field-box { position:relative; width:100%; height:720px; background-size:100% 100%; border-radius:15px; border:2px solid var(--border); display:flex; flex-direction:column; justify-content:space-around; padding:20px 0; box-shadow:0 10px 30px rgba(0,0,0,.5); }
+  .formation-row { display:flex; justify-content:center; gap:20px; width:100%; flex-wrap:wrap; }
 
-  .row-actions{ display:flex; gap:6px; }
-  .btn{ background:rgba(255,255,255,.06); border:1px solid var(--border); color:var(--text-light); padding:7px 12px; border-radius:5px; font-size:11px; cursor:pointer; font-weight:700; text-transform:uppercase; }
-  .btn:hover{ border-color:var(--gold); color:var(--gold); }
-  .btn.danger:hover{ border-color:var(--danger); color:var(--danger); }
-  .btn.primary{ background:linear-gradient(135deg,var(--gold-light),var(--gold)); color:#000; border:none; }
+  .fifa-card { width:84px; height:120px; background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; flex-direction:column; align-items:center; position:relative; box-shadow:0 10px 15px rgba(0,0,0,.45); transition:transform .2s; cursor:default; }
+  .fifa-card:hover { transform:scale(1.12) translateY(-4px); z-index:10; }
+  .c-rating { font-size:15px; font-weight:900; position:absolute; left:11px; top:12px; }
+  .c-pos { font-size:8px; font-weight:800; position:absolute; left:11px; top:29px; letter-spacing:.5px; }
+  .c-name { font-size:8.5px; font-weight:800; text-transform:uppercase; margin-top:70px; width:100%; text-align:center; background:rgba(0,0,0,.35); color:#fff; padding:3px 2px; text-shadow:0 1px 2px rgba(0,0,0,.6); }
+  .fifa-card.tier-white  { background-image:url('assets/tier-white.png'); color:#1a1a1a; }
+  .fifa-card.tier-red    { background-image:url('assets/tier-red.png');   color:#fff; }
+  .fifa-card.tier-gold   { background-image:url('assets/tier-gold.png');  color:#1a1a1a; }
+  .fifa-card.tier-black  { background-image:url('assets/tier-black.png'); color:#f1d279; }
+  .fifa-card.tier-red .c-name, .fifa-card.tier-black .c-name { background:rgba(0,0,0,.5); }
 
-  select, textarea{ background:rgba(255,255,255,.05); border:1px solid var(--border); color:var(--text-light); padding:8px 10px; border-radius:6px; font-size:13px; }
-  textarea{ width:100%; min-height:60px; font-family:inherit; }
-  .field{ margin-bottom:14px; }
-  .field label{ display:block; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
-  .field input{ width:100%; background:rgba(255,255,255,.05); border:1px solid var(--border); color:var(--text-light); padding:9px 10px; border-radius:6px; font-size:13px; }
-  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  .grid-4{ display:grid; grid-template-columns:2fr 1fr 1fr auto; gap:8px; align-items:end; }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; margin:14px 0 26px; font-size:11px; color:var(--text-muted); }
+  .legend span { display:inline-flex; align-items:center; gap:6px; }
+  .legend i { width:12px; height:12px; border-radius:3px; display:inline-block; }
+  .legend .li-white{background:#c7ccd1;} .legend .li-red{background:#8f1414;} .legend .li-gold{background:linear-gradient(135deg,#f1d279,#a67c00);} .legend .li-black{background:linear-gradient(135deg,#111,#caa94b);}
 
-  #toast{ position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--gold); color:#000; font-weight:800; font-size:12px; padding:10px 18px; border-radius:20px; box-shadow:0 6px 20px rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:opacity .25s; z-index:2000; }
-  #toast.show{ opacity:1; }
-  #toast.error{ background:var(--danger); color:#fff; }
+  .stats-card { background:var(--card-bg); border-radius:8px; overflow:hidden; margin-bottom:30px; border:1px solid var(--border); box-shadow:0 4px 20px rgba(0,0,0,.15); }
+  table { width:100%; border-collapse:collapse; }
+  th { background:var(--th-bg); color:var(--text-muted); font-size:11px; padding:15px; text-align:left; text-transform:uppercase; border-bottom:1px solid var(--border); }
+  td { padding:15px; border-bottom:1px solid var(--border); font-size:14px; font-weight:600; }
+  .stat-val { color:var(--gold); font-weight:bold; }
+  .num-col { width:40px; color:var(--text-muted); text-align:center; font-weight:700; }
+
+  .team-tabs { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .team-tabs button { flex:1; min-width:100px; padding:12px; border:1px solid var(--border); background:var(--card-bg); color:var(--text-light); font-weight:bold; cursor:pointer; border-radius:5px; transition:.2s; }
+  .team-tabs button.active { background:var(--gold); color:#000; border-color:var(--gold); }
+  .team-content { display:none; }
+  .team-content.active-team { display:block; }
+
+  .admin-link { position:fixed; bottom:14px; right:14px; z-index:999; background:rgba(0,0,0,.5); color:var(--text-muted); font-size:10px; text-decoration:none; padding:6px 10px; border-radius:20px; border:1px solid var(--border); letter-spacing:1px; text-transform:uppercase; }
+  .admin-link:hover { color:var(--gold); border-color:var(--gold); }
+  .loading-note { color:var(--text-muted); font-size:12px; padding:20px 0; }
 </style>
 </head>
 <body>
 
-<div id="login-screen">
-  <div class="login-box">
-    <h1>Admin Access</h1>
-    <p>Enter the password and passphrase to open the editor.</p>
-    <input type="password" id="pw" placeholder="Password" autocomplete="off">
-    <input type="password" id="pp" placeholder="Passphrase" autocomplete="off">
-    <button onclick="login()">Enter</button>
-    <div id="login-error"></div>
-  </div>
-</div>
+<header>
+  <div class="logo">Copa DeL Stream</div>
+  <nav>
+    <button onclick="showPage('home')" id="btn-home" class="active">Home</button>
+    <button onclick="showPage('fixtures')" id="btn-fixtures">Fixtures</button>
+    <button onclick="showPage('lineups')" id="btn-lineups">Lineups</button>
+    <button onclick="showPage('stats')" id="btn-stats">Detailed Stats</button>
+    <button onclick="showPage('table')" id="btn-table">Standings</button>
+    <div class="theme-dropdown">
+      <select id="theme-selector" onchange="switchTheme(this.value)">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+      </select>
+    </div>
+  </nav>
+</header>
 
-<div id="editor-screen">
-  <div id="topbar">
-    <div class="brand">Copa DeL Stream &middot; Admin</div>
-    <button class="logout" onclick="logout()">Log out</button>
-  </div>
-  <div id="tabs">
-    <button class="active" onclick="showTab('teams',this)">Teams</button>
-    <button onclick="showTab('players',this)">Players &amp; Ratings</button>
-    <button onclick="showTab('fixtures',this)">Fixtures</button>
-    <button onclick="showTab('standings',this)">Standings</button>
-    <button onclick="showTab('stats',this)">Top Stats</button>
-    <button onclick="showTab('home',this)">Home Text</button>
+<div class="container">
+  <div id="home" class="page active-page">
+    <h2>Home</h2>
+    <div class="pro-card">
+      <span class="eyebrow" id="home-eyebrow">Loading…</span>
+      <h1 id="home-title" style="margin:6px 0 18px;">Loading…</h1>
+      <p id="home-intro"></p>
+      <p id="home-body"></p>
+    </div>
+    <div class="totw-callout">
+      <div class="badge">Team of the Week</div>
+      <p id="home-totw"></p>
+    </div>
   </div>
 
-  <!-- TEAMS -->
-  <div id="tab-teams" class="tab-panel active">
-    <div class="panel-card">
-      <h3>Teams</h3>
-      <table class="admin-table">
-        <thead><tr><th>Name</th><th>Slug</th><th>Pitch background</th><th>Players</th><th></th></tr></thead>
-        <tbody id="teams-body"></tbody>
+  <div id="fixtures" class="page">
+    <h2>Upcoming &amp; Previous Matchdays</h2>
+    <h3 style="color:var(--text-muted); font-size:14px; text-transform:uppercase;">Upcoming</h3>
+    <div class="stats-card" id="fixtures-upcoming" style="margin-bottom:40px;"><div class="loading-note">Loading fixtures…</div></div>
+    <h3 style="color:var(--text-muted); font-size:14px; text-transform:uppercase;">Recent Results</h3>
+    <div class="stats-card" id="fixtures-results"><div class="loading-note">Loading results…</div></div>
+  </div>
+
+  <div id="lineups" class="page">
+    <h2>Team Lineups</h2>
+    <div class="legend">
+      <span><i class="li-black"></i>96+ Black</span>
+      <span><i class="li-gold"></i>86&ndash;95 Gold</span>
+      <span><i class="li-red"></i>76&ndash;85 Red</span>
+      <span><i class="li-white"></i>&le;75 White</span>
+    </div>
+    <div class="team-tabs" id="team-tabs"></div>
+    <div id="team-panels"><div class="loading-note">Loading lineups…</div></div>
+  </div>
+
+  <div id="stats" class="page">
+    <h2>Season Stats</h2>
+    <div class="stats-card">
+      <table>
+        <thead><tr><th class="num-col">#</th><th>Player</th><th>Team</th><th>MP</th><th>G</th><th>A</th><th>CS</th></tr></thead>
+        <tbody id="stats-body"><tr><td colspan="7" class="loading-note">Loading…</td></tr></tbody>
       </table>
     </div>
-    <div class="panel-card">
-      <h3>Add team</h3>
-      <div class="grid-2">
-        <div class="field"><label>Team name</label><input id="new-team-name" placeholder="e.g. Shadow United"></div>
-        <div class="field"><label>Slug (used for the lineup tab)</label><input id="new-team-slug" placeholder="auto-filled from the name"></div>
-      </div>
-      <div class="field" style="max-width:260px;">
-        <label>Pitch background</label>
-        <select id="new-team-pitch" style="width:100%;">
-          <option value="forlineup.png">forlineup.png</option>
-          <option value="field.png">field.png</option>
-          <option value="field1.jpg">field1.jpg</option>
-        </select>
-      </div>
-      <button class="btn primary" onclick="addTeam()">Add team</button>
-      <p style="color:var(--text-muted); font-size:11px; margin-top:10px;">
-        Pitch backgrounds are limited to the three field images already in <code>public/assets</code>.
-        To use a new image, upload it there first (via GitHub), then it'll appear here as an option.
-        Once a team exists, add its players from the "Players &amp; Ratings" tab.
-      </p>
-    </div>
   </div>
 
-  <!-- PLAYERS & RATINGS -->
-  <div id="tab-players" class="tab-panel">
-    <div class="panel-card">
-      <h3>Grading system</h3>
-      <p style="color:var(--text-muted); font-size:12px; margin:0;">
-        Rating &le;75 <span class="tier-chip white">White</span> &nbsp;
-        76&ndash;85 <span class="tier-chip red">Red</span> &nbsp;
-        86&ndash;95 <span class="tier-chip gold">Gold</span> &nbsp;
-        96+ <span class="tier-chip black">Black</span>
-      </p>
-    </div>
-    <div class="panel-card">
-      <h3>Team</h3>
-      <select id="team-select" onchange="loadPlayers()"></select>
-    </div>
-    <div class="panel-card">
-      <h3>Roster</h3>
-      <table class="admin-table">
-        <thead><tr><th>Name</th><th>Position</th><th>Rating</th><th>Tier</th><th></th></tr></thead>
-        <tbody id="players-body"></tbody>
+  <div id="table" class="page">
+    <h2>Standings</h2>
+    <div class="stats-card">
+      <table>
+        <thead><tr><th>Pos</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>PTS</th></tr></thead>
+        <tbody id="standings-body"><tr><td colspan="7" class="loading-note">Loading…</td></tr></tbody>
       </table>
-    </div>
-    <div class="panel-card">
-      <h3>Add player</h3>
-      <div class="grid-4">
-        <div><label style="font-size:11px;color:var(--text-muted);">Name</label><input id="new-player-name" placeholder="Player name"></div>
-        <div><label style="font-size:11px;color:var(--text-muted);">Position</label><input id="new-player-pos" placeholder="ST / CM / GK…"></div>
-        <div><label style="font-size:11px;color:var(--text-muted);">Rating</label><input id="new-player-rating" type="number" min="1" max="99" value="80"></div>
-        <button class="btn primary" onclick="addPlayer()">Add</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- FIXTURES -->
-  <div id="tab-fixtures" class="tab-panel">
-    <div class="panel-card">
-      <h3>Fixtures &amp; results</h3>
-      <table class="admin-table">
-        <thead><tr><th>Status</th><th>Date label</th><th>Home</th><th>Away</th><th>H</th><th>A</th><th></th></tr></thead>
-        <tbody id="fixtures-body"></tbody>
-      </table>
-    </div>
-    <div class="panel-card">
-      <h3>Add fixture</h3>
-      <div class="grid-2">
-        <div class="field"><label>Status</label>
-          <select id="new-fx-status"><option value="upcoming">Upcoming</option><option value="result">Result</option></select>
-        </div>
-        <div class="field"><label>Date label</label><input id="new-fx-date" placeholder="Saturday · May 2"></div>
-        <div class="field"><label>Home team</label><input id="new-fx-home"></div>
-        <div class="field"><label>Away team</label><input id="new-fx-away"></div>
-        <div class="field"><label>Home score (results only)</label><input id="new-fx-hs" type="number"></div>
-        <div class="field"><label>Away score (results only)</label><input id="new-fx-as" type="number"></div>
-      </div>
-      <button class="btn primary" onclick="addFixture()">Add fixture</button>
-    </div>
-  </div>
-
-  <!-- STANDINGS -->
-  <div id="tab-standings" class="tab-panel">
-    <div class="panel-card">
-      <h3>Standings</h3>
-      <table class="admin-table">
-        <thead><tr><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>PTS</th><th></th></tr></thead>
-        <tbody id="standings-body"></tbody>
-      </table>
-    </div>
-    <div class="panel-card">
-      <h3>Add team to table</h3>
-      <div class="grid-4">
-        <div><label style="font-size:11px;color:var(--text-muted);">Team name</label><input id="new-st-name"></div>
-        <div><label style="font-size:11px;color:var(--text-muted);">Points</label><input id="new-st-pts" type="number" value="0"></div>
-        <div></div>
-        <button class="btn primary" onclick="addStanding()">Add</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- STATS -->
-  <div id="tab-stats" class="tab-panel">
-    <div class="panel-card">
-      <h3>Top stats</h3>
-      <table class="admin-table">
-        <thead><tr><th>Player</th><th>Team</th><th>MP</th><th>G</th><th>A</th><th>CS</th><th></th></tr></thead>
-        <tbody id="stats-body"></tbody>
-      </table>
-    </div>
-    <div class="panel-card">
-      <h3>Add stat line</h3>
-      <div class="grid-2">
-        <div class="field"><label>Player</label><input id="new-stat-player"></div>
-        <div class="field"><label>Team</label><input id="new-stat-team"></div>
-      </div>
-      <button class="btn primary" onclick="addStat()">Add</button>
-    </div>
-  </div>
-
-  <!-- HOME TEXT -->
-  <div id="tab-home" class="tab-panel">
-    <div class="panel-card">
-      <h3>Home page text</h3>
-      <div class="field"><label>Eyebrow</label><input id="home_eyebrow"></div>
-      <div class="field"><label>Title</label><input id="home_title"></div>
-      <div class="field"><label>Intro paragraph</label><textarea id="home_intro"></textarea></div>
-      <div class="field"><label>Body paragraph</label><textarea id="home_body"></textarea></div>
-      <div class="field"><label>Team of the Week callout</label><textarea id="home_totw"></textarea></div>
-      <button class="btn primary" onclick="saveHomeContent()">Save home text</button>
     </div>
   </div>
 </div>
 
-<div id="toast"></div>
+<a class="admin-link" href="admin.html">Admin</a>
 
 <script>
-const API = '';
-let TOKEN = localStorage.getItem('cds_token') || null;
+const API = ''; // same-origin
 
-function authHeaders(){ return { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' }; }
-
-async function login(){
-  const password = document.getElementById('pw').value;
-  const passphrase = document.getElementById('pp').value;
-  const res = await fetch(API + '/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password, passphrase}) });
-  if (res.ok){
-    const data = await res.json();
-    TOKEN = data.token;
-    localStorage.setItem('cds_token', TOKEN);
-    enterEditor();
-  } else {
-    document.getElementById('login-error').textContent = 'Incorrect password or passphrase.';
-  }
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active-page');
+  document.getElementById('btn-' + id).classList.add('active');
+  window.scrollTo(0,0);
 }
-function logout(){
-  fetch(API + '/api/auth/logout', { method:'POST', headers: authHeaders() }).catch(()=>{});
-  localStorage.removeItem('cds_token'); TOKEN = null;
-  document.getElementById('editor-screen').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
+function switchTheme(themeName) {
+  document.documentElement.setAttribute('data-theme', themeName);
+  localStorage.setItem('cds_theme', themeName);
 }
-document.getElementById('pp').addEventListener('keydown', e => { if (e.key==='Enter') login(); });
+(function initTheme(){
+  const saved = localStorage.getItem('cds_theme');
+  if (saved) { document.documentElement.setAttribute('data-theme', saved); document.getElementById('theme-selector').value = saved; }
+})();
 
-function enterEditor(){
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('editor-screen').style.display='block';
-  refreshTeams().then(loadPlayers);
-  loadFixtures(); loadStandings(); loadStats(); loadHomeContent();
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function loadHome(){
+  const c = await fetch(API + '/api/content').then(r => r.json());
+  document.getElementById('home-eyebrow').textContent = c.home_eyebrow || '';
+  document.getElementById('home-title').textContent = c.home_title || '';
+  document.getElementById('home-intro').textContent = c.home_intro || '';
+  document.getElementById('home-body').textContent = c.home_body || '';
+  document.getElementById('home-totw').textContent = c.home_totw || '';
 }
-if (TOKEN) enterEditor();
 
-function showTab(name, btn){
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
+async function loadFixtures(){
+  const data = await fetch(API + '/api/fixtures').then(r => r.json());
+  const renderGroup = (rows) => {
+    if (!rows.length) return '<div class="match-row" style="border:none;">No matches yet.</div>';
+    return rows.map((m,i) => `
+      <div class="match-row" style="${i===rows.length-1?'border:none;':''}">
+        <div class="team">${esc(m.home_team)}</div>
+        <div class="score-box ${m.status==='upcoming'?'vs':''}">${m.status==='upcoming' ? 'VS' : (m.home_score+' - '+m.away_score)}</div>
+        <div class="team right">${esc(m.away_team)}</div>
+      </div>`).join('');
+  };
+  const byDate = (rows) => {
+    const groups = {};
+    rows.forEach(r => { (groups[r.date_label] ||= []).push(r); });
+    return Object.entries(groups).map(([date, rows]) => `<div class="date-header">${esc(date)}</div>${renderGroup(rows)}`).join('');
+  };
+  document.getElementById('fixtures-upcoming').innerHTML = byDate(data.upcoming) || '<div class="loading-note">No upcoming fixtures.</div>';
+  document.getElementById('fixtures-results').innerHTML = byDate(data.results) || '<div class="loading-note">No results yet.</div>';
+}
+
+let teamsCache = [];
+async function loadLineups(){
+  teamsCache = await fetch(API + '/api/teams').then(r => r.json());
+  const tabs = document.getElementById('team-tabs');
+  const panels = document.getElementById('team-panels');
+  tabs.innerHTML = teamsCache.map((t,i) => `<button data-slug="${t.slug}" class="${i===0?'active':''}" onclick="showTeam('${t.slug}', this)">${esc(t.name)}</button>`).join('');
+  panels.innerHTML = teamsCache.map((t,i) => `
+    <div id="team-${t.slug}" class="team-content ${i===0?'active-team':''}">
+      <div class="field-box" style="background-image:url('assets/${esc(t.pitch_image)}');">
+        ${renderFormation(t.players)}
+      </div>
+    </div>`).join('');
+}
+function renderFormation(players){
+  const byPos = { GK:[], DEF:[], MID:[], FWD:[] };
+  const bucket = pos => {
+    if (pos === 'GK') return 'GK';
+    if (['LB','CB','RB'].includes(pos)) return 'DEF';
+    if (['ST'].includes(pos)) return 'FWD';
+    return 'MID';
+  };
+  players.forEach(p => byPos[bucket(p.position)].push(p));
+  const row = list => list.length ? `<div class="formation-row">${list.map(cardHtml).join('')}</div>` : '';
+  return row(byPos.FWD) + row(byPos.MID) + row(byPos.DEF) + row(byPos.GK);
+}
+function cardHtml(p){
+  return `<div class="fifa-card tier-${p.tier}" title="Rating ${p.rating} — ${p.tier} tier">
+    <span class="c-rating">${p.rating}</span><span class="c-pos">${esc(p.position)}</span>
+    <div class="c-name">${esc(p.name)}</div>
+  </div>`;
+}
+function showTeam(slug, btn){
+  document.querySelectorAll('.team-content').forEach(tc => tc.classList.remove('active-team'));
+  document.querySelectorAll('#team-tabs button').forEach(b => b.classList.remove('active'));
+  document.getElementById('team-' + slug).classList.add('active-team');
   btn.classList.add('active');
 }
 
-function toast(msg, isError){
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = isError ? 'show error' : 'show';
-  clearTimeout(t._h); t._h = setTimeout(()=>{ t.className=''; }, 2400);
-}
-async function api(path, opts={}){
-  const res = await fetch(API + path, { ...opts, headers: { ...(opts.body?{'Content-Type':'application/json'}:{}) , ...(opts.auth!==false?{'Authorization':'Bearer '+TOKEN}:{}) , ...(opts.headers||{}) } });
-  if (res.status === 401){ toast('Session expired — please log in again', true); logout(); throw new Error('401'); }
-  if (!res.ok){ const e = await res.json().catch(()=>({error:'Request failed'})); toast(e.error || 'Request failed', true); throw new Error(e.error); }
-  return res.status === 204 ? null : res.json();
-}
-
-function tierForRating(r){
-  r = Number(r);
-  if (r >= 96) return 'black';
-  if (r >= 86) return 'gold';
-  if (r >= 76) return 'red';
-  return 'white';
-}
-function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-/* ---------- Teams ---------- */
-let teamsCache = [];
-const PITCH_IMAGES = ['forlineup.png', 'field.png', 'field1.jpg'];
-let newTeamSlugDirty = false;
-
-async function refreshTeams(){
-  teamsCache = await api('/api/teams', { auth:false });
-  const sel = document.getElementById('team-select');
-  const prevSlug = sel.value;
-  sel.innerHTML = teamsCache.map(t => `<option value="${t.slug}">${esc(t.name)}</option>`).join('');
-  if (teamsCache.some(t => t.slug === prevSlug)) sel.value = prevSlug;
-  renderTeamsTable();
-}
-function renderTeamsTable(){
-  document.getElementById('teams-body').innerHTML = teamsCache.map(t => `
-    <tr data-id="${t.id}">
-      <td><input value="${esc(t.name)}" onchange="markDirty(this)"></td>
-      <td style="color:var(--text-muted); font-size:12px;">${esc(t.slug)}</td>
-      <td><select onchange="markDirty(this)">${PITCH_IMAGES.map(img =>
-        `<option value="${img}" ${img === t.pitch_image ? 'selected' : ''}>${img}</option>`).join('')}</select></td>
-      <td style="text-align:center;">${t.players.length}</td>
-      <td class="row-actions">
-        <button class="btn" onclick="saveTeam(${t.id}, this)">Save</button>
-        <button class="btn danger" onclick="deleteTeam(${t.id}, '${esc(t.name).replace(/'/g, "\\'")}')">Delete</button>
-      </td>
-    </tr>`).join('') || '<tr><td colspan="5">No teams yet — add one below.</td></tr>';
-}
-async function saveTeam(id, btn){
-  const row = btn.closest('tr');
-  const name = row.querySelector('input').value.trim();
-  const pitch_image = row.querySelector('select').value;
-  if (!name) return toast('Team name is required', true);
-  await api('/api/teams/' + id, { method:'PUT', body: JSON.stringify({ name, pitch_image }) });
-  row.querySelectorAll('input,select').forEach(i => i.style.borderColor = 'var(--border)');
-  toast('Team saved');
-  refreshTeams();
-}
-async function deleteTeam(id, name){
-  if (!confirm(`Delete "${name}"? This also deletes every player on its roster — this can't be undone.`)) return;
-  await api('/api/teams/' + id, { method:'DELETE' });
-  toast('Team deleted');
-  await refreshTeams();
-  loadPlayers();
-}
-function slugify(s){ return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
-document.getElementById('new-team-name').addEventListener('input', function(){
-  if (!newTeamSlugDirty) document.getElementById('new-team-slug').value = slugify(this.value);
-});
-document.getElementById('new-team-slug').addEventListener('input', () => { newTeamSlugDirty = true; });
-async function addTeam(){
-  const name = document.getElementById('new-team-name').value.trim();
-  const slug = slugify(document.getElementById('new-team-slug').value.trim() || name);
-  const pitch_image = document.getElementById('new-team-pitch').value;
-  if (!name || !slug) return toast('Team name is required', true);
-  if (teamsCache.some(t => t.slug === slug)) return toast('That slug is already used by another team', true);
-  await api('/api/teams', { method:'POST', body: JSON.stringify({ slug, name, pitch_image, sort_order: teamsCache.length + 1 }) });
-  document.getElementById('new-team-name').value = '';
-  document.getElementById('new-team-slug').value = '';
-  newTeamSlugDirty = false;
-  toast('Team added');
-  await refreshTeams();
-  loadPlayers();
-}
-async function loadPlayers(){
-  const slug = document.getElementById('team-select').value || teamsCache[0]?.slug;
-  if (!slug) return;
-  const players = await api('/api/players?team=' + encodeURIComponent(slug), { auth:false });
-  const body = document.getElementById('players-body');
-  body.innerHTML = players.map(p => playerRow(p)).join('') || '<tr><td colspan="5">No players yet.</td></tr>';
-}
-function playerRow(p){
-  return `<tr data-id="${p.id}">
-    <td><input value="${esc(p.name)}" onchange="markDirty(this)"></td>
-    <td><input value="${esc(p.position)}" onchange="markDirty(this)" style="width:70px;"></td>
-    <td><input type="number" min="1" max="99" value="${p.rating}" oninput="updateTierChip(this)" onchange="markDirty(this)"></td>
-    <td><span class="tier-chip ${p.tier}">${p.tier}</span></td>
-    <td class="row-actions">
-      <button class="btn" onclick="savePlayer(${p.id}, this)">Save</button>
-      <button class="btn danger" onclick="deletePlayer(${p.id})">Delete</button>
-    </td>
-  </tr>`;
-}
-function updateTierChip(input){
-  const chip = input.closest('tr').querySelector('.tier-chip');
-  const tier = tierForRating(input.value);
-  chip.className = 'tier-chip ' + tier;
-  chip.textContent = tier;
-}
-function markDirty(input){ input.style.borderColor = 'var(--gold)'; }
-async function savePlayer(id, btn){
-  const row = btn.closest('tr');
-  const inputs = row.querySelectorAll('input');
-  const [name, position, rating] = [inputs[0].value, inputs[1].value, Number(inputs[2].value)];
-  const team = teamsCache.find(t => t.slug === document.getElementById('team-select').value);
-  await api('/api/players/' + id, { method:'PUT', body: JSON.stringify({ name, position, rating, team_id: team.id }) });
-  inputs.forEach(i => i.style.borderColor = 'var(--border)');
-  toast('Player saved');
-  loadPlayers();
-}
-async function deletePlayer(id){
-  if (!confirm('Delete this player?')) return;
-  await api('/api/players/' + id, { method:'DELETE' });
-  toast('Player deleted');
-  loadPlayers();
-}
-async function addPlayer(){
-  const team = teamsCache.find(t => t.slug === document.getElementById('team-select').value);
-  const name = document.getElementById('new-player-name').value.trim();
-  const position = document.getElementById('new-player-pos').value.trim();
-  const rating = Number(document.getElementById('new-player-rating').value);
-  if (!name || !position) return toast('Name and position are required', true);
-  await api('/api/players', { method:'POST', body: JSON.stringify({ team_id: team.id, name, position, rating }) });
-  document.getElementById('new-player-name').value = '';
-  document.getElementById('new-player-pos').value = '';
-  toast('Player added');
-  loadPlayers();
-}
-
-/* ---------- Fixtures ---------- */
-async function loadFixtures(){
-  const data = await api('/api/fixtures', { auth:false });
-  const rows = [...data.upcoming, ...data.results];
-  document.getElementById('fixtures-body').innerHTML = rows.map(f => `
-    <tr data-id="${f.id}">
-      <td>${f.status}</td><td>${esc(f.date_label)}</td><td>${esc(f.home_team)}</td><td>${esc(f.away_team)}</td>
-      <td>${f.home_score ?? ''}</td><td>${f.away_score ?? ''}</td>
-      <td><button class="btn danger" onclick="deleteFixture(${f.id})">Delete</button></td>
-    </tr>`).join('') || '<tr><td colspan="7">No fixtures yet.</td></tr>';
-}
-async function addFixture(){
-  const body = {
-    status: document.getElementById('new-fx-status').value,
-    date_label: document.getElementById('new-fx-date').value.trim(),
-    home_team: document.getElementById('new-fx-home').value.trim(),
-    away_team: document.getElementById('new-fx-away').value.trim(),
-    home_score: document.getElementById('new-fx-hs').value ? Number(document.getElementById('new-fx-hs').value) : null,
-    away_score: document.getElementById('new-fx-as').value ? Number(document.getElementById('new-fx-as').value) : null,
-  };
-  if (!body.date_label || !body.home_team || !body.away_team) return toast('Date, home and away team are required', true);
-  await api('/api/fixtures', { method:'POST', body: JSON.stringify(body) });
-  toast('Fixture added'); loadFixtures();
-}
-async function deleteFixture(id){
-  if (!confirm('Delete this fixture?')) return;
-  await api('/api/fixtures/' + id, { method:'DELETE' });
-  toast('Fixture deleted'); loadFixtures();
-}
-
-/* ---------- Standings ---------- */
-async function loadStandings(){
-  const rows = await api('/api/standings', { auth:false });
-  document.getElementById('standings-body').innerHTML = rows.map(s => `
-    <tr data-id="${s.id}">
-      <td><input value="${esc(s.team_name)}" onchange="markDirty(this)"></td>
-      <td><input type="number" value="${s.p}" style="width:55px;" onchange="markDirty(this)"></td>
-      <td><input type="number" value="${s.w}" style="width:55px;" onchange="markDirty(this)"></td>
-      <td><input type="number" value="${s.d}" style="width:55px;" onchange="markDirty(this)"></td>
-      <td><input type="number" value="${s.l}" style="width:55px;" onchange="markDirty(this)"></td>
-      <td><input type="number" value="${s.pts}" style="width:55px;" onchange="markDirty(this)"></td>
-      <td class="row-actions">
-        <button class="btn" onclick="saveStanding(${s.id}, this)">Save</button>
-        <button class="btn danger" onclick="deleteStanding(${s.id})">Delete</button>
-      </td>
-    </tr>`).join('') || '<tr><td colspan="7">No standings yet.</td></tr>';
-}
-async function saveStanding(id, btn){
-  const inputs = btn.closest('tr').querySelectorAll('input');
-  const [team_name,p,w,d,l,pts] = [inputs[0].value, ...[...inputs].slice(1).map(i=>Number(i.value))];
-  await api('/api/standings/' + id, { method:'PUT', body: JSON.stringify({team_name,p,w,d,l,pts}) });
-  inputs.forEach(i => i.style.borderColor = 'var(--border)');
-  toast('Standing saved'); loadStandings();
-}
-async function deleteStanding(id){
-  if (!confirm('Delete this row?')) return;
-  await api('/api/standings/' + id, { method:'DELETE' });
-  toast('Deleted'); loadStandings();
-}
-async function addStanding(){
-  const team_name = document.getElementById('new-st-name').value.trim();
-  const pts = Number(document.getElementById('new-st-pts').value || 0);
-  if (!team_name) return toast('Team name required', true);
-  await api('/api/standings', { method:'POST', body: JSON.stringify({ team_name, pts }) });
-  document.getElementById('new-st-name').value = '';
-  toast('Added to standings'); loadStandings();
-}
-
-/* ---------- Stats ---------- */
 async function loadStats(){
-  const rows = await api('/api/stats', { auth:false });
-  document.getElementById('stats-body').innerHTML = rows.map(s => `
-    <tr data-id="${s.id}">
-      <td><input value="${esc(s.player_name)}" onchange="markDirty(this)"></td>
-      <td><input value="${esc(s.team_name)}" onchange="markDirty(this)"></td>
-      <td><input type="number" value="${s.mp}" style="width:55px;" onchange="markDirty(this)"></td>
-      <td><input type="number" value="${s.g}" style="width:55px;" onchange="markDirty(this)"></td>
-      <td><input type="number" value="${s.a}" style="width:55px;" onchange="markDirty(this)"></td>
-      <td><input type="number" value="${s.cs}" style="width:55px;" onchange="markDirty(this)"></td>
-      <td class="row-actions">
-        <button class="btn" onclick="saveStat(${s.id}, this)">Save</button>
-        <button class="btn danger" onclick="deleteStat(${s.id})">Delete</button>
-      </td>
-    </tr>`).join('') || '<tr><td colspan="7">No stats yet.</td></tr>';
-}
-async function saveStat(id, btn){
-  const inputs = btn.closest('tr').querySelectorAll('input');
-  const [player_name, team_name, mp, g, a, cs] = [inputs[0].value, inputs[1].value, ...[...inputs].slice(2).map(i=>Number(i.value))];
-  await api('/api/stats/' + id, { method:'PUT', body: JSON.stringify({player_name, team_name, mp, g, a, cs}) });
-  inputs.forEach(i => i.style.borderColor = 'var(--border)');
-  toast('Stat saved'); loadStats();
-}
-async function deleteStat(id){
-  if (!confirm('Delete this row?')) return;
-  await api('/api/stats/' + id, { method:'DELETE' });
-  toast('Deleted'); loadStats();
-}
-async function addStat(){
-  const player_name = document.getElementById('new-stat-player').value.trim();
-  const team_name = document.getElementById('new-stat-team').value.trim();
-  if (!player_name || !team_name) return toast('Player and team required', true);
-  await api('/api/stats', { method:'POST', body: JSON.stringify({ player_name, team_name }) });
-  document.getElementById('new-stat-player').value = '';
-  document.getElementById('new-stat-team').value = '';
-  toast('Stat line added'); loadStats();
+  const rows = await fetch(API + '/api/stats').then(r => r.json());
+  document.getElementById('stats-body').innerHTML = rows.map((s,i) => `
+    <tr><td class="num-col">${i+1}</td><td>${esc(s.player_name)}</td><td>${esc(s.team_name)}</td>
+    <td>${s.mp}</td><td class="stat-val">${s.g}</td><td class="stat-val">${s.a}</td><td>${s.cs}</td></tr>`).join('')
+    || '<tr><td colspan="7" class="loading-note">No stats yet.</td></tr>';
 }
 
-/* ---------- Home content ---------- */
-async function loadHomeContent(){
-  const c = await api('/api/content', { auth:false });
-  ['home_eyebrow','home_title','home_intro','home_body','home_totw'].forEach(k => {
-    const el = document.getElementById(k);
-    if (el) el.value = c[k] || '';
-  });
+async function loadStandings(){
+  const rows = await fetch(API + '/api/standings').then(r => r.json());
+  const sorted = [...rows].sort((a,b) => b.pts - a.pts);
+  document.getElementById('standings-body').innerHTML = sorted.map((s,i) => `
+    <tr><td style="${i===0?'color:var(--gold)':''}">${i+1}</td><td>${esc(s.team_name)}</td>
+    <td>${s.p}</td><td>${s.w}</td><td>${s.d}</td><td>${s.l}</td><td class="stat-val">${s.pts}</td></tr>`).join('')
+    || '<tr><td colspan="7" class="loading-note">No standings yet.</td></tr>';
 }
-async function saveHomeContent(){
-  const keys = ['home_eyebrow','home_title','home_intro','home_body','home_totw'];
-  for (const k of keys){
-    await api('/api/content/' + k, { method:'PUT', body: JSON.stringify({ value: document.getElementById(k).value }) });
-  }
-  toast('Home text saved');
-}
+
+Promise.all([loadHome(), loadFixtures(), loadLineups(), loadStats(), loadStandings()])
+  .catch(err => console.error('Failed to load site data from the API:', err));
 </script>
 </body>
 </html>
