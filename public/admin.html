@@ -84,15 +84,48 @@
     <button class="logout" onclick="logout()">Log out</button>
   </div>
   <div id="tabs">
-    <button class="active" onclick="showTab('players',this)">Players &amp; Ratings</button>
+    <button class="active" onclick="showTab('teams',this)">Teams</button>
+    <button onclick="showTab('players',this)">Players &amp; Ratings</button>
     <button onclick="showTab('fixtures',this)">Fixtures</button>
     <button onclick="showTab('standings',this)">Standings</button>
     <button onclick="showTab('stats',this)">Top Stats</button>
     <button onclick="showTab('home',this)">Home Text</button>
   </div>
 
+  <!-- TEAMS -->
+  <div id="tab-teams" class="tab-panel active">
+    <div class="panel-card">
+      <h3>Teams</h3>
+      <table class="admin-table">
+        <thead><tr><th>Name</th><th>Slug</th><th>Pitch background</th><th>Players</th><th></th></tr></thead>
+        <tbody id="teams-body"></tbody>
+      </table>
+    </div>
+    <div class="panel-card">
+      <h3>Add team</h3>
+      <div class="grid-2">
+        <div class="field"><label>Team name</label><input id="new-team-name" placeholder="e.g. Shadow United"></div>
+        <div class="field"><label>Slug (used for the lineup tab)</label><input id="new-team-slug" placeholder="auto-filled from the name"></div>
+      </div>
+      <div class="field" style="max-width:260px;">
+        <label>Pitch background</label>
+        <select id="new-team-pitch" style="width:100%;">
+          <option value="forlineup.png">forlineup.png</option>
+          <option value="field.png">field.png</option>
+          <option value="field1.jpg">field1.jpg</option>
+        </select>
+      </div>
+      <button class="btn primary" onclick="addTeam()">Add team</button>
+      <p style="color:var(--text-muted); font-size:11px; margin-top:10px;">
+        Pitch backgrounds are limited to the three field images already in <code>public/assets</code>.
+        To use a new image, upload it there first (via GitHub), then it'll appear here as an option.
+        Once a team exists, add its players from the "Players &amp; Ratings" tab.
+      </p>
+    </div>
+  </div>
+
   <!-- PLAYERS & RATINGS -->
-  <div id="tab-players" class="tab-panel active">
+  <div id="tab-players" class="tab-panel">
     <div class="panel-card">
       <h3>Grading system</h3>
       <p style="color:var(--text-muted); font-size:12px; margin:0;">
@@ -234,7 +267,7 @@ document.getElementById('pp').addEventListener('keydown', e => { if (e.key==='En
 function enterEditor(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('editor-screen').style.display='block';
-  loadTeamsIntoSelect().then(loadPlayers);
+  refreshTeams().then(loadPlayers);
   loadFixtures(); loadStandings(); loadStats(); loadHomeContent();
 }
 if (TOKEN) enterEditor();
@@ -267,12 +300,68 @@ function tierForRating(r){
 }
 function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-/* ---------- Players & Ratings ---------- */
+/* ---------- Teams ---------- */
 let teamsCache = [];
-async function loadTeamsIntoSelect(){
+const PITCH_IMAGES = ['forlineup.png', 'field.png', 'field1.jpg'];
+let newTeamSlugDirty = false;
+
+async function refreshTeams(){
   teamsCache = await api('/api/teams', { auth:false });
   const sel = document.getElementById('team-select');
+  const prevSlug = sel.value;
   sel.innerHTML = teamsCache.map(t => `<option value="${t.slug}">${esc(t.name)}</option>`).join('');
+  if (teamsCache.some(t => t.slug === prevSlug)) sel.value = prevSlug;
+  renderTeamsTable();
+}
+function renderTeamsTable(){
+  document.getElementById('teams-body').innerHTML = teamsCache.map(t => `
+    <tr data-id="${t.id}">
+      <td><input value="${esc(t.name)}" onchange="markDirty(this)"></td>
+      <td style="color:var(--text-muted); font-size:12px;">${esc(t.slug)}</td>
+      <td><select onchange="markDirty(this)">${PITCH_IMAGES.map(img =>
+        `<option value="${img}" ${img === t.pitch_image ? 'selected' : ''}>${img}</option>`).join('')}</select></td>
+      <td style="text-align:center;">${t.players.length}</td>
+      <td class="row-actions">
+        <button class="btn" onclick="saveTeam(${t.id}, this)">Save</button>
+        <button class="btn danger" onclick="deleteTeam(${t.id}, '${esc(t.name).replace(/'/g, "\\'")}')">Delete</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="5">No teams yet — add one below.</td></tr>';
+}
+async function saveTeam(id, btn){
+  const row = btn.closest('tr');
+  const name = row.querySelector('input').value.trim();
+  const pitch_image = row.querySelector('select').value;
+  if (!name) return toast('Team name is required', true);
+  await api('/api/teams/' + id, { method:'PUT', body: JSON.stringify({ name, pitch_image }) });
+  row.querySelectorAll('input,select').forEach(i => i.style.borderColor = 'var(--border)');
+  toast('Team saved');
+  refreshTeams();
+}
+async function deleteTeam(id, name){
+  if (!confirm(`Delete "${name}"? This also deletes every player on its roster — this can't be undone.`)) return;
+  await api('/api/teams/' + id, { method:'DELETE' });
+  toast('Team deleted');
+  await refreshTeams();
+  loadPlayers();
+}
+function slugify(s){ return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
+document.getElementById('new-team-name').addEventListener('input', function(){
+  if (!newTeamSlugDirty) document.getElementById('new-team-slug').value = slugify(this.value);
+});
+document.getElementById('new-team-slug').addEventListener('input', () => { newTeamSlugDirty = true; });
+async function addTeam(){
+  const name = document.getElementById('new-team-name').value.trim();
+  const slug = slugify(document.getElementById('new-team-slug').value.trim() || name);
+  const pitch_image = document.getElementById('new-team-pitch').value;
+  if (!name || !slug) return toast('Team name is required', true);
+  if (teamsCache.some(t => t.slug === slug)) return toast('That slug is already used by another team', true);
+  await api('/api/teams', { method:'POST', body: JSON.stringify({ slug, name, pitch_image, sort_order: teamsCache.length + 1 }) });
+  document.getElementById('new-team-name').value = '';
+  document.getElementById('new-team-slug').value = '';
+  newTeamSlugDirty = false;
+  toast('Team added');
+  await refreshTeams();
+  loadPlayers();
 }
 async function loadPlayers(){
   const slug = document.getElementById('team-select').value || teamsCache[0]?.slug;
