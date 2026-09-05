@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copa DeL Stream | Admin</title>
+<style>
+  :root{ --gold:#d4af37; --gold-light:#f1d279; --bg:#0b0f1a; --panel:#141a29; --card-bg:#1e293b;
+    --text-light:#f8fafc; --text-muted:#94a3b8; --border:#334155; --danger:#e35b5b; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; min-height:100%; background:var(--bg); color:var(--text-light); font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; }
+
+  #login-screen{ height:100vh; display:flex; align-items:center; justify-content:center; }
+  .login-box{ width:320px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:30px; box-shadow:0 20px 50px rgba(0,0,0,.5); }
+  .login-box h1{ font-size:15px; text-transform:uppercase; letter-spacing:2px; color:var(--gold); margin:0 0 4px; }
+  .login-box p{ color:var(--text-muted); font-size:12px; margin:0 0 20px; }
+  .login-box input{ width:100%; padding:11px 12px; margin-bottom:12px; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:6px; color:var(--text-light); font-size:14px; }
+  .login-box input:focus{ outline:none; border-color:var(--gold); }
+  .login-box button{ width:100%; padding:12px; background:linear-gradient(135deg,var(--gold-light),var(--gold)); border:none; border-radius:6px; font-weight:800; letter-spacing:1px; text-transform:uppercase; font-size:12px; cursor:pointer; }
+  #login-error{ color:var(--danger); font-size:12px; margin-top:10px; min-height:14px; }
+
+  #editor-screen{ display:none; }
+  #topbar{ display:flex; align-items:center; justify-content:space-between; padding:14px 20px; background:var(--panel); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10; flex-wrap:wrap; gap:10px; }
+  #topbar .brand{ font-weight:900; letter-spacing:2px; text-transform:uppercase; font-size:13px; color:var(--gold); }
+  #topbar .logout{ background:none; border:1px solid var(--border); color:var(--text-muted); padding:7px 14px; border-radius:6px; font-size:11px; cursor:pointer; text-transform:uppercase; }
+  #topbar .logout:hover{ border-color:var(--danger); color:var(--danger); }
+
+  #tabs{ display:flex; gap:6px; padding:14px 20px 0; flex-wrap:wrap; }
+  #tabs button{ background:rgba(255,255,255,.05); border:1px solid var(--border); color:var(--text-muted); padding:9px 16px; border-radius:6px 6px 0 0; font-size:12px; font-weight:700; cursor:pointer; text-transform:uppercase; letter-spacing:.5px; }
+  #tabs button.active{ background:var(--card-bg); color:var(--gold); border-color:var(--gold); border-bottom-color:var(--card-bg); }
+
+  .tab-panel{ display:none; max-width:980px; margin:0 auto; padding:24px 20px 60px; }
+  .tab-panel.active{ display:block; }
+  .panel-card{ background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:20px; margin-bottom:20px; }
+  .panel-card h3{ margin:0 0 16px; font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--gold); }
+
+  table.admin-table{ width:100%; border-collapse:collapse; }
+  table.admin-table th{ text-align:left; font-size:10px; color:var(--text-muted); text-transform:uppercase; padding:8px; border-bottom:1px solid var(--border); }
+  table.admin-table td{ padding:6px 8px; border-bottom:1px solid var(--border); }
+  table.admin-table input{ width:100%; background:rgba(255,255,255,.05); border:1px solid var(--border); color:var(--text-light); padding:7px 8px; border-radius:5px; font-size:13px; }
+  table.admin-table input[type=number]{ width:70px; }
+
+  .tier-chip{ display:inline-block; padding:3px 10px; border-radius:20px; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.5px; }
+  .tier-chip.white{ background:#c7ccd1; color:#111; }
+  .tier-chip.red{ background:#8f1414; color:#fff; }
+  .tier-chip.gold{ background:linear-gradient(135deg,#f1d279,#a67c00); color:#1a1a1a; }
+  .tier-chip.black{ background:linear-gradient(135deg,#111,#caa94b); color:#f1d279; }
+
+  .row-actions{ display:flex; gap:6px; }
+  .btn{ background:rgba(255,255,255,.06); border:1px solid var(--border); color:var(--text-light); padding:7px 12px; border-radius:5px; font-size:11px; cursor:pointer; font-weight:700; text-transform:uppercase; }
+  .btn:hover{ border-color:var(--gold); color:var(--gold); }
+  .btn.danger:hover{ border-color:var(--danger); color:var(--danger); }
+  .btn.primary{ background:linear-gradient(135deg,var(--gold-light),var(--gold)); color:#000; border:none; }
+
+  select, textarea{ background:rgba(255,255,255,.05); border:1px solid var(--border); color:var(--text-light); padding:8px 10px; border-radius:6px; font-size:13px; }
+  textarea{ width:100%; min-height:60px; font-family:inherit; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+  .field input{ width:100%; background:rgba(255,255,255,.05); border:1px solid var(--border); color:var(--text-light); padding:9px 10px; border-radius:6px; font-size:13px; }
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .grid-4{ display:grid; grid-template-columns:2fr 1fr 1fr auto; gap:8px; align-items:end; }
+
+  #toast{ position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--gold); color:#000; font-weight:800; font-size:12px; padding:10px 18px; border-radius:20px; box-shadow:0 6px 20px rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:opacity .25s; z-index:2000; }
+  #toast.show{ opacity:1; }
+  #toast.error{ background:var(--danger); color:#fff; }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <h1>Admin Access</h1>
+    <p>Enter the password and passphrase to open the editor.</p>
+    <input type="password" id="pw" placeholder="Password" autocomplete="off">
+    <input type="password" id="pp" placeholder="Passphrase" autocomplete="off">
+    <button onclick="login()">Enter</button>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<div id="editor-screen">
+  <div id="topbar">
+    <div class="brand">Copa DeL Stream &middot; Admin</div>
+    <button class="logout" onclick="logout()">Log out</button>
+  </div>
+  <div id="tabs">
+    <button class="active" onclick="showTab('players',this)">Players &amp; Ratings</button>
+    <button onclick="showTab('fixtures',this)">Fixtures</button>
+    <button onclick="showTab('standings',this)">Standings</button>
+    <button onclick="showTab('stats',this)">Top Stats</button>
+    <button onclick="showTab('home',this)">Home Text</button>
+  </div>
+
+  <!-- PLAYERS & RATINGS -->
+  <div id="tab-players" class="tab-panel active">
+    <div class="panel-card">
+      <h3>Grading system</h3>
+      <p style="color:var(--text-muted); font-size:12px; margin:0;">
+        Rating &le;75 <span class="tier-chip white">White</span> &nbsp;
+        76&ndash;85 <span class="tier-chip red">Red</span> &nbsp;
+        86&ndash;95 <span class="tier-chip gold">Gold</span> &nbsp;
+        96+ <span class="tier-chip black">Black</span>
+      </p>
+    </div>
+    <div class="panel-card">
+      <h3>Team</h3>
+      <select id="team-select" onchange="loadPlayers()"></select>
+    </div>
+    <div class="panel-card">
+      <h3>Roster</h3>
+      <table class="admin-table">
+        <thead><tr><th>Name</th><th>Position</th><th>Rating</th><th>Tier</th><th></th></tr></thead>
+        <tbody id="players-body"></tbody>
+      </table>
+    </div>
+    <div class="panel-card">
+      <h3>Add player</h3>
+      <div class="grid-4">
+        <div><label style="font-size:11px;color:var(--text-muted);">Name</label><input id="new-player-name" placeholder="Player name"></div>
+        <div><label style="font-size:11px;color:var(--text-muted);">Position</label><input id="new-player-pos" placeholder="ST / CM / GK…"></div>
+        <div><label style="font-size:11px;color:var(--text-muted);">Rating</label><input id="new-player-rating" type="number" min="1" max="99" value="80"></div>
+        <button class="btn primary" onclick="addPlayer()">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIXTURES -->
+  <div id="tab-fixtures" class="tab-panel">
+    <div class="panel-card">
+      <h3>Fixtures &amp; results</h3>
+      <table class="admin-table">
+        <thead><tr><th>Status</th><th>Date label</th><th>Home</th><th>Away</th><th>H</th><th>A</th><th></th></tr></thead>
+        <tbody id="fixtures-body"></tbody>
+      </table>
+    </div>
+    <div class="panel-card">
+      <h3>Add fixture</h3>
+      <div class="grid-2">
+        <div class="field"><label>Status</label>
+          <select id="new-fx-status"><option value="upcoming">Upcoming</option><option value="result">Result</option></select>
+        </div>
+        <div class="field"><label>Date label</label><input id="new-fx-date" placeholder="Saturday · May 2"></div>
+        <div class="field"><label>Home team</label><input id="new-fx-home"></div>
+        <div class="field"><label>Away team</label><input id="new-fx-away"></div>
+        <div class="field"><label>Home score (results only)</label><input id="new-fx-hs" type="number"></div>
+        <div class="field"><label>Away score (results only)</label><input id="new-fx-as" type="number"></div>
+      </div>
+      <button class="btn primary" onclick="addFixture()">Add fixture</button>
+    </div>
+  </div>
+
+  <!-- STANDINGS -->
+  <div id="tab-standings" class="tab-panel">
+    <div class="panel-card">
+      <h3>Standings</h3>
+      <table class="admin-table">
+        <thead><tr><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>PTS</th><th></th></tr></thead>
+        <tbody id="standings-body"></tbody>
+      </table>
+    </div>
+    <div class="panel-card">
+      <h3>Add team to table</h3>
+      <div class="grid-4">
+        <div><label style="font-size:11px;color:var(--text-muted);">Team name</label><input id="new-st-name"></div>
+        <div><label style="font-size:11px;color:var(--text-muted);">Points</label><input id="new-st-pts" type="number" value="0"></div>
+        <div></div>
+        <button class="btn primary" onclick="addStanding()">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div id="tab-stats" class="tab-panel">
+    <div class="panel-card">
+      <h3>Top stats</h3>
+      <table class="admin-table">
+        <thead><tr><th>Player</th><th>Team</th><th>MP</th><th>G</th><th>A</th><th>CS</th><th></th></tr></thead>
+        <tbody id="stats-body"></tbody>
+      </table>
+    </div>
+    <div class="panel-card">
+      <h3>Add stat line</h3>
+      <div class="grid-2">
+        <div class="field"><label>Player</label><input id="new-stat-player"></div>
+        <div class="field"><label>Team</label><input id="new-stat-team"></div>
+      </div>
+      <button class="btn primary" onclick="addStat()">Add</button>
+    </div>
+  </div>
+
+  <!-- HOME TEXT -->
+  <div id="tab-home" class="tab-panel">
+    <div class="panel-card">
+      <h3>Home page text</h3>
+      <div class="field"><label>Eyebrow</label><input id="home_eyebrow"></div>
+      <div class="field"><label>Title</label><input id="home_title"></div>
+      <div class="field"><label>Intro paragraph</label><textarea id="home_intro"></textarea></div>
+      <div class="field"><label>Body paragraph</label><textarea id="home_body"></textarea></div>
+      <div class="field"><label>Team of the Week callout</label><textarea id="home_totw"></textarea></div>
+      <button class="btn primary" onclick="saveHomeContent()">Save home text</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API = '';
+let TOKEN = localStorage.getItem('cds_token') || null;
+
+function authHeaders(){ return { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' }; }
+
+async function login(){
+  const password = document.getElementById('pw').value;
+  const passphrase = document.getElementById('pp').value;
+  const res = await fetch(API + '/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password, passphrase}) });
+  if (res.ok){
+    const data = await res.json();
+    TOKEN = data.token;
+    localStorage.setItem('cds_token', TOKEN);
+    enterEditor();
+  } else {
+    document.getElementById('login-error').textContent = 'Incorrect password or passphrase.';
+  }
+}
+function logout(){
+  fetch(API + '/api/auth/logout', { method:'POST', headers: authHeaders() }).catch(()=>{});
+  localStorage.removeItem('cds_token'); TOKEN = null;
+  document.getElementById('editor-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+document.getElementById('pp').addEventListener('keydown', e => { if (e.key==='Enter') login(); });
+
+function enterEditor(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('editor-screen').style.display='block';
+  loadTeamsIntoSelect().then(loadPlayers);
+  loadFixtures(); loadStandings(); loadStats(); loadHomeContent();
+}
+if (TOKEN) enterEditor();
+
+function showTab(name, btn){
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function toast(msg, isError){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = isError ? 'show error' : 'show';
+  clearTimeout(t._h); t._h = setTimeout(()=>{ t.className=''; }, 2400);
+}
+async function api(path, opts={}){
+  const res = await fetch(API + path, { ...opts, headers: { ...(opts.body?{'Content-Type':'application/json'}:{}) , ...(opts.auth!==false?{'Authorization':'Bearer '+TOKEN}:{}) , ...(opts.headers||{}) } });
+  if (res.status === 401){ toast('Session expired — please log in again', true); logout(); throw new Error('401'); }
+  if (!res.ok){ const e = await res.json().catch(()=>({error:'Request failed'})); toast(e.error || 'Request failed', true); throw new Error(e.error); }
+  return res.status === 204 ? null : res.json();
+}
+
+function tierForRating(r){
+  r = Number(r);
+  if (r >= 96) return 'black';
+  if (r >= 86) return 'gold';
+  if (r >= 76) return 'red';
+  return 'white';
+}
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------- Players & Ratings ---------- */
+let teamsCache = [];
+async function loadTeamsIntoSelect(){
+  teamsCache = await api('/api/teams', { auth:false });
+  const sel = document.getElementById('team-select');
+  sel.innerHTML = teamsCache.map(t => `<option value="${t.slug}">${esc(t.name)}</option>`).join('');
+}
+async function loadPlayers(){
+  const slug = document.getElementById('team-select').value || teamsCache[0]?.slug;
+  if (!slug) return;
+  const players = await api('/api/players?team=' + encodeURIComponent(slug), { auth:false });
+  const body = document.getElementById('players-body');
+  body.innerHTML = players.map(p => playerRow(p)).join('') || '<tr><td colspan="5">No players yet.</td></tr>';
+}
+function playerRow(p){
+  return `<tr data-id="${p.id}">
+    <td><input value="${esc(p.name)}" onchange="markDirty(this)"></td>
+    <td><input value="${esc(p.position)}" onchange="markDirty(this)" style="width:70px;"></td>
+    <td><input type="number" min="1" max="99" value="${p.rating}" oninput="updateTierChip(this)" onchange="markDirty(this)"></td>
+    <td><span class="tier-chip ${p.tier}">${p.tier}</span></td>
+    <td class="row-actions">
+      <button class="btn" onclick="savePlayer(${p.id}, this)">Save</button>
+      <button class="btn danger" onclick="deletePlayer(${p.id})">Delete</button>
+    </td>
+  </tr>`;
+}
+function updateTierChip(input){
+  const chip = input.closest('tr').querySelector('.tier-chip');
+  const tier = tierForRating(input.value);
+  chip.className = 'tier-chip ' + tier;
+  chip.textContent = tier;
+}
+function markDirty(input){ input.style.borderColor = 'var(--gold)'; }
+async function savePlayer(id, btn){
+  const row = btn.closest('tr');
+  const inputs = row.querySelectorAll('input');
+  const [name, position, rating] = [inputs[0].value, inputs[1].value, Number(inputs[2].value)];
+  const team = teamsCache.find(t => t.slug === document.getElementById('team-select').value);
+  await api('/api/players/' + id, { method:'PUT', body: JSON.stringify({ name, position, rating, team_id: team.id }) });
+  inputs.forEach(i => i.style.borderColor = 'var(--border)');
+  toast('Player saved');
+  loadPlayers();
+}
+async function deletePlayer(id){
+  if (!confirm('Delete this player?')) return;
+  await api('/api/players/' + id, { method:'DELETE' });
+  toast('Player deleted');
+  loadPlayers();
+}
+async function addPlayer(){
+  const team = teamsCache.find(t => t.slug === document.getElementById('team-select').value);
+  const name = document.getElementById('new-player-name').value.trim();
+  const position = document.getElementById('new-player-pos').value.trim();
+  const rating = Number(document.getElementById('new-player-rating').value);
+  if (!name || !position) return toast('Name and position are required', true);
+  await api('/api/players', { method:'POST', body: JSON.stringify({ team_id: team.id, name, position, rating }) });
+  document.getElementById('new-player-name').value = '';
+  document.getElementById('new-player-pos').value = '';
+  toast('Player added');
+  loadPlayers();
+}
+
+/* ---------- Fixtures ---------- */
+async function loadFixtures(){
+  const data = await api('/api/fixtures', { auth:false });
+  const rows = [...data.upcoming, ...data.results];
+  document.getElementById('fixtures-body').innerHTML = rows.map(f => `
+    <tr data-id="${f.id}">
+      <td>${f.status}</td><td>${esc(f.date_label)}</td><td>${esc(f.home_team)}</td><td>${esc(f.away_team)}</td>
+      <td>${f.home_score ?? ''}</td><td>${f.away_score ?? ''}</td>
+      <td><button class="btn danger" onclick="deleteFixture(${f.id})">Delete</button></td>
+    </tr>`).join('') || '<tr><td colspan="7">No fixtures yet.</td></tr>';
+}
+async function addFixture(){
+  const body = {
+    status: document.getElementById('new-fx-status').value,
+    date_label: document.getElementById('new-fx-date').value.trim(),
+    home_team: document.getElementById('new-fx-home').value.trim(),
+    away_team: document.getElementById('new-fx-away').value.trim(),
+    home_score: document.getElementById('new-fx-hs').value ? Number(document.getElementById('new-fx-hs').value) : null,
+    away_score: document.getElementById('new-fx-as').value ? Number(document.getElementById('new-fx-as').value) : null,
+  };
+  if (!body.date_label || !body.home_team || !body.away_team) return toast('Date, home and away team are required', true);
+  await api('/api/fixtures', { method:'POST', body: JSON.stringify(body) });
+  toast('Fixture added'); loadFixtures();
+}
+async function deleteFixture(id){
+  if (!confirm('Delete this fixture?')) return;
+  await api('/api/fixtures/' + id, { method:'DELETE' });
+  toast('Fixture deleted'); loadFixtures();
+}
+
+/* ---------- Standings ---------- */
+async function loadStandings(){
+  const rows = await api('/api/standings', { auth:false });
+  document.getElementById('standings-body').innerHTML = rows.map(s => `
+    <tr data-id="${s.id}">
+      <td><input value="${esc(s.team_name)}" onchange="markDirty(this)"></td>
+      <td><input type="number" value="${s.p}" style="width:55px;" onchange="markDirty(this)"></td>
+      <td><input type="number" value="${s.w}" style="width:55px;" onchange="markDirty(this)"></td>
+      <td><input type="number" value="${s.d}" style="width:55px;" onchange="markDirty(this)"></td>
+      <td><input type="number" value="${s.l}" style="width:55px;" onchange="markDirty(this)"></td>
+      <td><input type="number" value="${s.pts}" style="width:55px;" onchange="markDirty(this)"></td>
+      <td class="row-actions">
+        <button class="btn" onclick="saveStanding(${s.id}, this)">Save</button>
+        <button class="btn danger" onclick="deleteStanding(${s.id})">Delete</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="7">No standings yet.</td></tr>';
+}
+async function saveStanding(id, btn){
+  const inputs = btn.closest('tr').querySelectorAll('input');
+  const [team_name,p,w,d,l,pts] = [inputs[0].value, ...[...inputs].slice(1).map(i=>Number(i.value))];
+  await api('/api/standings/' + id, { method:'PUT', body: JSON.stringify({team_name,p,w,d,l,pts}) });
+  inputs.forEach(i => i.style.borderColor = 'var(--border)');
+  toast('Standing saved'); loadStandings();
+}
+async function deleteStanding(id){
+  if (!confirm('Delete this row?')) return;
+  await api('/api/standings/' + id, { method:'DELETE' });
+  toast('Deleted'); loadStandings();
+}
+async function addStanding(){
+  const team_name = document.getElementById('new-st-name').value.trim();
+  const pts = Number(document.getElementById('new-st-pts').value || 0);
+  if (!team_name) return toast('Team name required', true);
+  await api('/api/standings', { method:'POST', body: JSON.stringify({ team_name, pts }) });
+  document.getElementById('new-st-name').value = '';
+  toast('Added to standings'); loadStandings();
+}
+
+/* ---------- Stats ---------- */
+async function loadStats(){
+  const rows = await api('/api/stats', { auth:false });
+  document.getElementById('stats-body').innerHTML = rows.map(s => `
+    <tr data-id="${s.id}">
+      <td><input value="${esc(s.player_name)}" onchange="markDirty(this)"></td>
+      <td><input value="${esc(s.team_name)}" onchange="markDirty(this)"></td>
+      <td><input type="number" value="${s.mp}" style="width:55px;" onchange="markDirty(this)"></td>
+      <td><input type="number" value="${s.g}" style="width:55px;" onchange="markDirty(this)"></td>
+      <td><input type="number" value="${s.a}" style="width:55px;" onchange="markDirty(this)"></td>
+      <td><input type="number" value="${s.cs}" style="width:55px;" onchange="markDirty(this)"></td>
+      <td class="row-actions">
+        <button class="btn" onclick="saveStat(${s.id}, this)">Save</button>
+        <button class="btn danger" onclick="deleteStat(${s.id})">Delete</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="7">No stats yet.</td></tr>';
+}
+async function saveStat(id, btn){
+  const inputs = btn.closest('tr').querySelectorAll('input');
+  const [player_name, team_name, mp, g, a, cs] = [inputs[0].value, inputs[1].value, ...[...inputs].slice(2).map(i=>Number(i.value))];
+  await api('/api/stats/' + id, { method:'PUT', body: JSON.stringify({player_name, team_name, mp, g, a, cs}) });
+  inputs.forEach(i => i.style.borderColor = 'var(--border)');
+  toast('Stat saved'); loadStats();
+}
+async function deleteStat(id){
+  if (!confirm('Delete this row?')) return;
+  await api('/api/stats/' + id, { method:'DELETE' });
+  toast('Deleted'); loadStats();
+}
+async function addStat(){
+  const player_name = document.getElementById('new-stat-player').value.trim();
+  const team_name = document.getElementById('new-stat-team').value.trim();
+  if (!player_name || !team_name) return toast('Player and team required', true);
+  await api('/api/stats', { method:'POST', body: JSON.stringify({ player_name, team_name }) });
+  document.getElementById('new-stat-player').value = '';
+  document.getElementById('new-stat-team').value = '';
+  toast('Stat line added'); loadStats();
+}
+
+/* ---------- Home content ---------- */
+async function loadHomeContent(){
+  const c = await api('/api/content', { auth:false });
+  ['home_eyebrow','home_title','home_intro','home_body','home_totw'].forEach(k => {
+    const el = document.getElementById(k);
+    if (el) el.value = c[k] || '';
+  });
+}
+async function saveHomeContent(){
+  const keys = ['home_eyebrow','home_title','home_intro','home_body','home_totw'];
+  for (const k of keys){
+    await api('/api/content/' + k, { method:'PUT', body: JSON.stringify({ value: document.getElementById(k).value }) });
+  }
+  toast('Home text saved');
+}
+</script>
+</body>
+</html>
